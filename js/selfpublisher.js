@@ -33,7 +33,7 @@ sfpSettings.getEditTemplate = function () {
 
 sfpSettings.bindAll = function (obj) {
 	obj.find('button.remove').on('click',function(){});
-	obj.find('button.save').on('click',sfpSettings.getInputTemplate
+	//obj.find('button.save').on('click',sfpSettings.getInputTemplate);
 }
 
 sfpSettings.getEditModel = function () {

@@ -24,15 +24,15 @@ function sfp_settings_page(){
     // @TODO create javascript namespaced var with types, maybe to json or
     // something
     // @TODO add nonces to js
-    $addNonce = wp_create_nonce('sfp_addmodel');
-    $removeNonce = wp_create_nonce('sfp_removemodel');
-    $editNonce = wp_create_nonce('sfp_editmodel');
 
     echo sfp_display_table();
 
 }
 
 function bakeJS($data) {
+    $addNonce = wp_create_nonce('sfp_addmodel');
+    $removeNonce = wp_create_nonce('sfp_removemodel');
+    $editNonce = wp_create_nonce('sfp_editmodel');
     echo "<script type=text/javascript>window.sfpSettings = {
         addNonce: '$addNonce',
         editNonce: '$editNonce',
@@ -45,11 +45,18 @@ function sfp_display_table() {
 	global $wpdb;
 	global $table_name;
 
+
+
+	wp_enqueue_script('selfpublisher_js', '/wp-content/plugins/selfpublisher/js/selfpublisher.js');
+	wp_enqueue_script('sfp_js', '/wp-content/plugins/selfpublisher/js/sfp.js');
+	wp_enqueue_script('model_js', '/wp-content/plugins/selfpublisher/js/model.js');
+	wp_register_style( 'sfp_style', '/wp-content/plugins/selfpublisher/css/style.css' );
+        wp_enqueue_style( 'sfp_style' );
+
+
     $rows = $wpdb->get_results( "SELECT * FROM $table_name" );
 
-	wp_enqueue_script('sfp_js', '/wp-content/plugins/selfpublisher/js/selfpublisher.js');
-	wp_enqueue_script('model_js', '/wp-content/plugins/selfpublisher/js/model.js');
-
+/*
 	$display = '<div class="wrap">
 				<table class="wp-list-table widefat posts">
 					<thead><tr>
@@ -57,11 +64,13 @@ function sfp_display_table() {
 						<th class="column-title">Operations</th>
 					</tr></thead>
 				';
+*/
 
 	$temp = '{';
     foreach ($rows as $r) {
 		$temp .= '"'.$r->name.'":';
 		$temp .= $r->data .',';
+		/*
 		$display .= "<tr id='".$r->name."'>
 						<td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json($r->data).")</td>
 						<td>
@@ -69,12 +78,19 @@ function sfp_display_table() {
 							<button class='button' id='delete_button'>Delete</button>
 						</td>
 					</tr>";
+		*/
 	}
 	$temp = substr($temp,0,-1);
 	$temp .= '}';
 	bakeJS($temp);
 
-    $display .= '</table></div>';
+    //$display .= '</table></div>';
+
+
+	$display = "<div id='editModels'>
+					<div id='modelList'></div>
+					<input type='button' onclick='ADDmodel()' value='Add new Model' />
+				</div>";
 
     return $display;
 }
@@ -161,11 +177,12 @@ function sfp_editmodel(){
         $wpdb->update(
             $table_name,
             array(
-                'name' => $_POST['name']
-                //'data' => $_POST['data']
+                'name' => $_POST['name'],
+                'data' => $_POST['data']
             ),
             array( 'ID' => $_POST['id'] ),
             array(
+                '%s',
                 '%s'
             ),
             array('%d')
