@@ -18,6 +18,11 @@ function sfp_menu (){
 }
 function sfp_settings_page(){
     //require_once('selfpublishing-save-helpers.php');
+    // @TODO render list of models here in table
+    // @TODO create javascript namespaced var with types, maybe to json or
+    // something
+    // @TODO add nonces to js
+
     echo sfp_display_table();
 }
 
@@ -35,40 +40,34 @@ function bakeJS($data) {
 
 function sfp_display_table() {
 	global $wpdb;
-	global $table_name;
+
+    $table_name = $wpdb->prefix . "selfpublisher";
+	wp_enqueue_script('selfpublisher_js', '/wp-content/plugins/omc/js/selfpublisher.js');
+	wp_enqueue_script('sfp_js', '/wp-content/plugins/omc/js/sfp.js');
+	wp_enqueue_script('model_js', '/wp-content/plugins/omc/js/model.js');
+	wp_register_style( 'sfp_style', '/wp-content/plugins/omc/css/style.css' );
+    wp_enqueue_style( 'sfp_style' );
+
 
     $rows = $wpdb->get_results( "SELECT * FROM $table_name" );
 
-	wp_enqueue_script('sfp_js', '/wp-content/plugins/selfpublisher/js/selfpublisher.js');
-	wp_enqueue_script('model_js', '/wp-content/plugins/selfpublisher/js/model.js');
 
-	$display = '<div class="wrap">
-				<table class="wp-list-table widefat posts">
-					<thead><tr>
-						<th class="column-title" style="width: 75%;">Model</th>
-						<th class="column-title">Operations</th>
-					</tr></thead>
-				';
-
-    if(!empty($rows)){
-        $temp = '{';
-        foreach ($rows as $r) {
-            $temp .= '"'.$r->name.'":';
-            $temp .= $r->data .',';
-            $display .= "<tr id='".$r->name."'>
-                            <td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json($r->data).")</td>
-                            <td>
-                                <button class='button' id='edit_button'>Edit</button>
-                                <button class='button' id='delete_button'>Delete</button>
-                            </td>
-                        </tr>";
-        }
-        $temp = substr($temp,0,-1);
-        $temp .= '}';
-    } else {
-        $temp = null;
-    }
+	$temp = '{';
+    foreach ($rows as $r) {
+		$temp .= '"'.$r->id.'":';
+		$temp .= $r->data .',';
+	}
+	$temp = substr($temp,0,-1);
+	$temp .= '}';
 	bakeJS($temp);
+
+    //$display .= '</table></div>';
+
+
+	$display = "<div id='editModels'>
+					<div id='modelList'></div>
+					<input type='button' onclick='ADDmodel()' value='Add new Model' />
+				</div>";
 
     return $display;
 }
@@ -129,6 +128,26 @@ function sfp_addmodel(){
     }
 }
 
+add_action('wp_ajax_getmodels', 'sfp_getmodels');
+function sfp_getmodels(){
+    global $wpdb;
+    $table_name = $wpdb->prefix . "selfpublisher";
+        // @TODO verify that delete works
+        $rows = $wpdb->get_results( "SELECT * FROM $table_name" );
+
+        $temp = '{';
+        foreach ($rows as $r) {
+            $temp .= '"'.$r->id.'":';
+            $temp .= $r->data .',';
+        }
+        $temp = substr($temp,0,-1);
+        $temp .= '}';
+        return $temp;
+
+        echo 'true';
+        exit();die();
+}
+
 add_action('wp_ajax_removemodel', 'sfp_removemodel');
 function sfp_removemodel(){
     global $wpdb;
@@ -157,11 +176,12 @@ function sfp_editmodel(){
         $wpdb->update(
             $table_name,
             array(
-                'name' => $_POST['name']
-                //'data' => $_POST['data']
+                'name' => $_POST['name'],
+                'data' => $_POST['data']
             ),
-            array( 'ID' => $_POST['id'] ),
+            array( 'id' => $_POST['id'] ),
             array(
+                '%s',
                 '%s'
             ),
             array('%d')
