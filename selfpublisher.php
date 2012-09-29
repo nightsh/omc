@@ -23,7 +23,12 @@ function sfp_settings_page(){
     // @TODO create javascript namespaced var with types, maybe to json or
     // something
     // @TODO add nonces to js
-    echo '<script type=text/javascript>window.sfpSettings = {}</script>';
+    $addNonce = wp_create_nonce('sfp_addmodel');
+    $removeNonce = wp_create_nonce('sfp_removemodel');
+    echo "<script type=text/javascript>window.sfpSettings = {
+        addNonce: '$addNonce',
+        removeNonce: '$removeNonce'
+    }</script>";
 }
 
 register_activation_hook(__FILE__,'sfp_install');
@@ -47,25 +52,35 @@ function sfp_install(){
     add_option("sfp_db_version", $sfp_db_version);
 }
 
-// @TODO test ajax calls
+// @TODO better security
 // jquery deferred example
-// a = jQuery.post('admin-ajax.php',{'action':'addmodel'})}
+// a = jQuery.post('admin-ajax.php',{'action':'addmodel',nonce:window.sfpSettings.addNonce})}
 add_action('wp_ajax_addmodel', 'sfp_addmodel');
 function sfp_addmodel(){
+    global $wpdb;
+    $table_name = $wpdb->prefix . "selfpublisher";
     $nonce = $_POST['nonce'];
-    if (wp_verify_nonce($nonce,'sfp_add_category')) {
-        print_r($_POST);
-        echo 'merge add';
-        exit();
+    if (wp_verify_nonce($nonce,'sfp_addmodel')) {
+        $wpdb->insert($table_name,
+            array(
+                'name' => $_POST['name'],
+                'data' => $_POST['data']
+            )
+        );
+        echo 'true';
+        exit();die();
+    } else {
+        echo 'I pitty you fool!';
+        exit();die();
     }
 }
 add_action('wp_ajax_removemodel', 'sfp_removemodel');
 function sfp_removemodel(){
     $nonce = $_POST['nonce'];
-    if (wp_verify_nonce($nonce,'sfp_remove_category')) {
-        print_r($_POST);
-        echo 'merge delete';
-        exit();
+    if (wp_verify_nonce($nonce,'sfp_removemodel')) {
+        // @TODO remove model from db
+        echo 'true';
+        exit();die();
     }
 }
 ?>
