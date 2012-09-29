@@ -9,7 +9,6 @@
  * License: TBA
  */
 
-// @TODO mechanism to store to db
 // @TODO mechanism to get all from db
 // @TODO parse the data into arrays and make them global
 // @TODO ajax storing
@@ -74,11 +73,21 @@ function sfp_addmodel(){
         exit();die();
     }
 }
+
 add_action('wp_ajax_removemodel', 'sfp_removemodel');
 function sfp_removemodel(){
+    global $wpdb;
+    $table_name = $wpdb->prefix . "selfpublisher";
     $nonce = $_POST['nonce'];
     if (wp_verify_nonce($nonce,'sfp_removemodel')) {
-        // @TODO remove model from db
+        // @TODO verify that delete works
+        $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM '$table'
+                 WHERE post_id = %d",
+                 $_POST['id']
+            )
+        );
         echo 'true';
         exit();die();
     }
