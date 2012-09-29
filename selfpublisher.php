@@ -9,74 +9,70 @@
  * License: TBA
  */
 
-// @TODO mechanism to get all from db
 // @TODO parse the data into arrays and make them global
 // @TODO ajax storing
-
-$table_name = $wpdb->prefix . "selfpublisher";
 
 add_action('admin_menu', sfp_menu);
 function sfp_menu (){
     add_menu_page('Self Publish Settings','Self Publish Settings','administrator',__FILE__,'sfp_settings_page');
 }
 function sfp_settings_page(){
-    // @TODO render list of models here in table
-    // @TODO create javascript namespaced var with types, maybe to json or
-    // something
-    // @TODO add nonces to js
     $addNonce = wp_create_nonce('sfp_addmodel');
     $removeNonce = wp_create_nonce('sfp_removemodel');
     $editNonce = wp_create_nonce('sfp_editmodel');
     echo "<script type=text/javascript>window.sfpSettings = {
         addNonce: '$addNonce',
-        editNonce: '$editNonce',
-        removeNonce: '$removeNonce'
+            editNonce: '$editNonce',
+            removeNonce: '$removeNonce'
     }</script>";
+// @TODO add json for js here
 
-    global $wpdb;
-    global $table_name;
+global $wpdb;
+global $table_name;
 
-    $rows = $wpdb->get_results( "SELECT * FROM $table_name" );
+$rows = $wpdb->get_results( "SELECT * FROM $table_name" );
 
-	$display = '<div class="wrap">
-				<table class="wp-list-table widefat posts">
-					<thead><tr>
-						<th class="column-title" style="width: 75%;">Model</th>
-						<th class="column-title">Operations</th>
-					</tr></thead>
-				';
+$display = '<div class="wrap">
+    <table class="wp-list-table widefat posts">
+    <thead><tr>
+    <th class="column-title" style="width: 75%;">Model</th>
+    <th class="column-title">Operations</th>
+    </tr></thead>
+    ';
 
-    foreach ($rows as $r) {
-		$display .= "<tr>
-						<td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json(&$r->data).")</td>
-						<td>
-							<button>Edit</button>
-							<button>Delete</button>
-						</td>
-					</tr>";
-	}
+foreach ($rows as $r) {
+    $display .= "<tr>
+        <td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json(&$r->data).")</td>
+        <td>
+        <button>Edit</button>
+        <button>Delete</button>
+        </td>
+        </tr>";
+}
 
-    $display .= '</table></div>';
+$display .= '</table></div>';
 
-    echo $display;
+echo $display;
+
+require_once('selfpublishing-save-helpers.php');
 
 }
 
 function sfp_display_json($json){
-	$json = json_decode($json);
-	$display = '';
-	foreach ($json as $key => $value) {
-		$display .= $key.', ';
-	}
-	return substr($display,0,-2);
+    $json = json_decode($json);
+    $display = '';
+    foreach ($json as $key => $value) {
+        $display .= $key.', ';
+    }
+    return substr($display,0,-2);
 }
 
 register_activation_hook(__FILE__,'sfp_install');
 function sfp_install(){
     global $wpdb;
     global $sfp_db_version;
-    global $table_name;
 
+    $table_name = $wpdb->prefix . "selfpublisher";
     if($wpdb->get_var("show tables like '$table_name'") != $table_name){
         $sql = "CREATE TABLE $table_name (
             id smallint(3) NOT NULL AUTO_INCREMENT,
@@ -96,7 +92,7 @@ function sfp_install(){
 
 // @TODO better security
 // jquery deferred example
-// a = jQuery.post('admin-ajax.php',{'action':'addmodel',nonce:window.sfpSettings.addNonce})}
+// a = jQuery.post('admin-ajax.php',{'action':'addmodel',nonce:window.sfpSettings.addNonce,data:the_data})}
 add_action('wp_ajax_addmodel', 'sfp_addmodel');
 function sfp_addmodel(){
     global $wpdb;
@@ -112,6 +108,7 @@ function sfp_addmodel(){
         echo 'true';
         exit();die();
     } else {
+        loadSelfPublishArrays();
         echo 'I pitty you fool!';
         exit();die();
     }
@@ -127,10 +124,11 @@ function sfp_removemodel(){
         $wpdb->query(
             $wpdb->prepare(
                 "DELETE FROM '$table'
-                 WHERE post_id = %d",
-                 $_POST['id']
+                WHERE post_id = %d",
+                $_POST['id']
             )
         );
+        loadSelfPublishArrays();
         echo 'true';
         exit();die();
     }
@@ -153,8 +151,14 @@ function sfp_editmodel(){
             ),
             array('%d')
         );
+        loadSelfPublishArrays();
         echo 'true';
         exit();die();
     }
 }
+
+function loadSelfPublishArrays(){
+    // @TODO generatePostTypeArgs(name) for all custom post types
+}
+
 ?>
