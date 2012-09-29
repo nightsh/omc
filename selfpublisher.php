@@ -20,42 +20,58 @@ function sfp_settings_page(){
     $addNonce = wp_create_nonce('sfp_addmodel');
     $removeNonce = wp_create_nonce('sfp_removemodel');
     $editNonce = wp_create_nonce('sfp_editmodel');
-    echo "<script type=text/javascript>window.sfpSettings = {
-        addNonce: '$addNonce',
-            editNonce: '$editNonce',
-            removeNonce: '$removeNonce'
-    }</script>";
-// @TODO add json for js here
 
-global $wpdb;
-global $table_name;
+    echo sfp_display_table();
 
-$rows = $wpdb->get_results( "SELECT * FROM $table_name" );
-
-$display = '<div class="wrap">
-    <table class="wp-list-table widefat posts">
-    <thead><tr>
-    <th class="column-title" style="width: 75%;">Model</th>
-    <th class="column-title">Operations</th>
-    </tr></thead>
-    ';
-
-foreach ($rows as $r) {
-    $display .= "<tr>
-        <td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json(&$r->data).")</td>
-        <td>
-        <button>Edit</button>
-        <button>Delete</button>
-        </td>
-        </tr>";
 }
 
-$display .= '</table></div>';
+function bakeJS($data) {
+    echo "<script type=text/javascript>window.sfpSettings = {
+        addNonce: '$addNonce',
+        editNonce: '$editNonce',
+        removeNonce: '$removeNonce',
+        data: '$data'
+    }</script>";
+}
+
+function sfp_display_table() {
+	global $wpdb;
+	global $table_name;
+
+    $rows = $wpdb->get_results( "SELECT * FROM $table_name" );
+
+	wp_enqueue_script('sfp_js', '/wp-content/plugins/selfpublisher/js/selfpublisher.js');
+	wp_enqueue_script('model_js', '/wp-content/plugins/selfpublisher/js/model.js');
+
+	$display = '<div class="wrap">
+				<table class="wp-list-table widefat posts">
+					<thead><tr>
+						<th class="column-title" style="width: 75%;">Model</th>
+						<th class="column-title">Operations</th>
+					</tr></thead>
+				';
+
+	$temp = '{';
+    foreach ($rows as $r) {
+		$temp .= '"'.$r->name.'":';
+		$temp .= $r->data .',';
+		$display .= "<tr id='".$r->name."'>
+						<td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json($r->data).")</td>
+						<td>
+							<button class='button' id='edit_button'>Edit</button>
+							<button class='button' id='delete_button'>Delete</button>
+						</td>
+					</tr>";
+	}
+	$temp = substr($temp,0,-1);
+	$temp .= '}';
+	bakeJS($temp);
 
 echo $display;
 
 require_once('selfpublishing-save-helpers.php');
 
+    return $display;
 }
 
 function sfp_display_json($json){
