@@ -27,16 +27,28 @@ function sfp_settings_page(){
     $addNonce = wp_create_nonce('sfp_addmodel');
     $removeNonce = wp_create_nonce('sfp_removemodel');
     $editNonce = wp_create_nonce('sfp_editmodel');
+
+    echo sfp_display_table();
+
+}
+
+function bakeJS($data) {
     echo "<script type=text/javascript>window.sfpSettings = {
         addNonce: '$addNonce',
         editNonce: '$editNonce',
-        removeNonce: '$removeNonce'
+        removeNonce: '$removeNonce',
+        data: '$data'
     }</script>";
+}
 
-    global $wpdb;
-    global $table_name;
+function sfp_display_table() {
+	global $wpdb;
+	global $table_name;
 
     $rows = $wpdb->get_results( "SELECT * FROM $table_name" );
+
+	wp_enqueue_script('sfp_js', '/wp-content/plugins/selfpublisher/js/selfpublisher.js');
+	wp_enqueue_script('model_js', '/wp-content/plugins/selfpublisher/js/model.js');
 
 	$display = '<div class="wrap">
 				<table class="wp-list-table widefat posts">
@@ -46,20 +58,25 @@ function sfp_settings_page(){
 					</tr></thead>
 				';
 
+	$temp = '{';
     foreach ($rows as $r) {
-		$display .= "<tr>
-						<td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json(&$r->data).")</td>
+		$temp .= '"'.$r->name.'":';
+		$temp .= $r->data .',';
+		$display .= "<tr id='".$r->name."'>
+						<td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json($r->data).")</td>
 						<td>
-							<button>Edit</button>
-							<button>Delete</button>
+							<button class='button' id='edit_button'>Edit</button>
+							<button class='button' id='delete_button'>Delete</button>
 						</td>
 					</tr>";
 	}
+	$temp = substr($temp,0,-1);
+	$temp .= '}';
+	bakeJS($temp);
 
     $display .= '</table></div>';
 
-    echo $display;
-
+    return $display;
 }
 
 function sfp_display_json($json){
@@ -75,7 +92,7 @@ register_activation_hook(__FILE__,'sfp_install');
 function sfp_install(){
     global $wpdb;
     global $sfp_db_version;
-    global $table_name;
+    $table_name = $wpdb->prefix . "selfpublisher";
 
     if($wpdb->get_var("show tables like '$table_name'") != $table_name){
         $sql = "CREATE TABLE $table_name (
