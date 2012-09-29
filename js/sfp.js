@@ -205,15 +205,10 @@ function SET_fieldTypes(selectedType)    {
 
 
 jQuery(document).ready(function() {
-
     modelsNR = models.length;
-
     for(var modelID in models )
         {
             HTMLview = GET_modelView(models[modelID],modelID);
             jQuery("#modelList").prepend(HTMLview);
-
         }
-
-
 });
