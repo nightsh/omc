@@ -24,8 +24,10 @@ function sfp_settings_page(){
     // @TODO add nonces to js
     $addNonce = wp_create_nonce('sfp_addmodel');
     $removeNonce = wp_create_nonce('sfp_removemodel');
+    $editNonce = wp_create_nonce('sfp_editmodel');
     echo "<script type=text/javascript>window.sfpSettings = {
         addNonce: '$addNonce',
+        editNonce: '$editNonce',
         removeNonce: '$removeNonce'
     }</script>";
 }
@@ -87,6 +89,28 @@ function sfp_removemodel(){
                  WHERE post_id = %d",
                  $_POST['id']
             )
+        );
+        echo 'true';
+        exit();die();
+    }
+}
+add_action('wp_ajax_editmodel', 'sfp_editmodel');
+function sfp_editmodel(){
+    global $wpdb;
+    $table_name = $wpdb->prefix . "selfpublisher";
+    $nonce = $_POST['nonce'];
+    if (wp_verify_nonce($nonce,'sfp_editmodel')) {
+        $wpdb->update(
+            $table_name,
+            array(
+                'name' => $_POST['name']
+                //'data' => $_POST['data']
+            ),
+            array( 'ID' => $_POST['id'] ),
+            array(
+                '%s'
+            ),
+            array('%d')
         );
         echo 'true';
         exit();die();
