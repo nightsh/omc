@@ -17,15 +17,14 @@ function sfp_menu (){
     add_menu_page('Self Publish Settings','Self Publish Settings','administrator',__FILE__,'sfp_settings_page');
 }
 function sfp_settings_page(){
-    $addNonce = wp_create_nonce('sfp_addmodel');
-    $removeNonce = wp_create_nonce('sfp_removemodel');
-    $editNonce = wp_create_nonce('sfp_editmodel');
-
+    //require_once('selfpublishing-save-helpers.php');
     echo sfp_display_table();
-
 }
 
 function bakeJS($data) {
+    $addNonce = wp_create_nonce('sfp_addmodel');
+    $removeNonce = wp_create_nonce('sfp_removemodel');
+    $editNonce = wp_create_nonce('sfp_editmodel');
     echo "<script type=text/javascript>window.sfpSettings = {
         addNonce: '$addNonce',
         editNonce: '$editNonce',
@@ -51,25 +50,25 @@ function sfp_display_table() {
 					</tr></thead>
 				';
 
-	$temp = '{';
-    foreach ($rows as $r) {
-		$temp .= '"'.$r->name.'":';
-		$temp .= $r->data .',';
-		$display .= "<tr id='".$r->name."'>
-						<td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json($r->data).")</td>
-						<td>
-							<button class='button' id='edit_button'>Edit</button>
-							<button class='button' id='delete_button'>Delete</button>
-						</td>
-					</tr>";
-	}
-	$temp = substr($temp,0,-1);
-	$temp .= '}';
+    if(!empty($rows)){
+        $temp = '{';
+        foreach ($rows as $r) {
+            $temp .= '"'.$r->name.'":';
+            $temp .= $r->data .',';
+            $display .= "<tr id='".$r->name."'>
+                            <td>".$r->id.'. <b>'.$r->name.'</b> ('.sfp_display_json($r->data).")</td>
+                            <td>
+                                <button class='button' id='edit_button'>Edit</button>
+                                <button class='button' id='delete_button'>Delete</button>
+                            </td>
+                        </tr>";
+        }
+        $temp = substr($temp,0,-1);
+        $temp .= '}';
+    } else {
+        $temp = null;
+    }
 	bakeJS($temp);
-
-echo $display;
-
-require_once('selfpublishing-save-helpers.php');
 
     return $display;
 }
