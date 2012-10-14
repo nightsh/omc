@@ -1,0 +1,35 @@
+SelfPublisher
+
+STATUS:
+
+under development
+
+DESCRIPTION:
+
+Simple to set up solution for self publishing on a wordpress website.
+After installing the plugin an entry in the system menu is created that allows a user to create his own types of entries with how many custom fields he needs.
+The idea is to allow a fast custom setup for wordpress. Since it creates custom post types, the rendering engine allows the new entries to be displayed out of the box on any theme.
+It is also useful for technical users since theming the custom wordpress website is reduced to creating custom templates or modifying the css.
+
+TECHNICAL DETAILS:
+
+The settings page exposes a list of existing post types. Each can be edited in a modal window or removed. New types can be added.
+The modal window uses javascript to render a list of elements, each containing an input field for the name of the field and a dropdown with supported types.
+A description field will be added for the next version.
+Once the save button is clicked, a json is sent via a post to an ajax handler in the plugin, that stores the new data. The plugin adds hooks to save the custom meta properly, as well as a display mechanism for custom fields.
+
+NOT WORKING:
+
+Creating custom post types from stored data.
+Local server issue that forced us to put all php code in one file ( something with loading external php files we didn't have time to look into ).
+No pre-render hook for custom fields in place.
+Uninstall not working properly.
+
+FUTURE PLAN:
+
+A lot of refactoring. Use default wordpress styles. Fix bugs.
+
+INSTALL STEPS:
+
+- drop the contents of the archive in the plugins folder
+- activate the plugin from wordpress
